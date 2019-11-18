@@ -22,36 +22,24 @@ log = open("build_manifest_log.txt", "a")
 paths = []
 for annotation in contents:
     paths.append(annotation["location"]["standard"])
-print("Number of unique images: "+ str(len(list(set(paths)))))
-sys.exit()
 
+unique_paths = list(set(paths))
+print("Number of unique images: "+ str(len(unique_paths)))
 
 # sets count for observing progress
 ct = 1
 
-# now, we iterate through annotation and grab the image using requests
-for annotation in contents:
-
-    # pull off the values we need
-    id = annotation["id"]
-    location = annotation["location"]["standard"]
-    annotation_region = annotation["region"]
-    im_width = annotation["width"]
-    im_height = annotation["height"]
-
-    # sets coordinates of annotation region
-    x1 = int(annotation_region["x"])
-    x2 = x1 + int(annotation_region["width"])
-    y1 = int(annotation_region["y"])
-    y2 = y1 + int(annotation_region["height"])
-
-    # constructs filepath for downloaded image
-    destination = "beyond_words_data/extracted/" + str(id) + ".jpg"
-    label_path = "beyond_words_data/labels/" + str(id) + ".jpg"
+# now, we iterate through each unique path and grab the image using requests
+# we also find all corresponding annotations and draw masks
+for path in unique_paths[:10]:
 
     # here, we try to pull down the image (if the request isn't stale)
     try:
-        r = requests.get(location, stream=True)
+
+        # destination filepath of image
+        destination = "beyond_words_data/extracted/" + path.replace('/', '_') + ".jpg"
+
+        r = requests.get(path, stream=True)
         # makes sure the request passed:
         if r.status_code == 200:
             with open(destination, 'wb') as f:
@@ -63,11 +51,47 @@ for annotation in contents:
     except:
         log.write("Download failed: " + str(location) + "\n")
 
-    # now, we construct the label image
+    # now, we construct the label image to add the annotations
+    im = Image.open(destination)
+    im_width, im_height = im.size
+
     label = Image.new(mode = "RGB", size = (im_width, im_height))
     draw  = ImageDraw.Draw(label)
     draw.rectangle(((0, 0), (im_width, im_height)), fill="black")
-    draw.rectangle(((x1, y1), (x2, y2)), fill="red")
+
+    # counts the number of annotations per image
+    n_annotations = 0
+
+    # we now find all of the annotations corresponding to this image
+    for annotation in contents:
+
+        # pulls off filepath for annotation
+        location = annotation["location"]["standard"]
+
+        # if the annotation corresponds to ths image, we record the annotation on the label image
+        if location == path:
+
+            # pull off the other values we need
+            id = annotation["id"]
+            annotation_region = annotation["region"]
+            im_width = annotation["width"]
+            im_height = annotation["height"]
+
+            # sets coordinates of annotation region
+            x1 = int(annotation_region["x"])
+            x2 = x1 + int(annotation_region["width"])
+            y1 = int(annotation_region["y"])
+            y2 = y1 + int(annotation_region["height"])
+
+            # add the annotation to the label image
+            draw.rectangle(((x1, y1), (x2, y2)), fill="red")
+
+            n_annotations += 1
+
+            print("Number of annotations for this image: " + str(n_annotations))
+
+    # constructs filepath for downloaded image
+    label_path = "beyond_words_data/labels/" + path.replace('/', '_') + ".jpg"
 
     # save the constructed image
     label.save(label_path, "PNG")
@@ -75,4 +99,4 @@ for annotation in contents:
     # increment count for log
     ct += 1
 
-    sys.exit()
+    # sys.exit()
