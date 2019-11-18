@@ -98,15 +98,25 @@ def buildFullManifest():
 #The images are downloaded to the following directory structure: data/FullPages/BatchLevel/IssueLevel/PageLevel
 #This function also uses wget in order to download images, this is due to complications we ran into
 #using urllib with the Library of Congress's server.
-def getImages(startYear = 1836, endYear = datetime.now().year):
+def getImages(startYear=1836, startMonth=1, startDay=1, endYear=datetime.now().year, endMonth=datetime.now().month, endDay=datetime.now().day):
     Error404 = []
     imageCount = 0
     with open(manifest_file, "r") as masterManifest:
+
+        # iterate through the files in the manifest
         for line in masterManifest:
             lineList = line.split('/')
+
+            # parses off date of publication
             imageYear = int(lineList[9][:4])
+            imageMonth = int(lineList[9][4:6])
+            imageDay = int(lineList[9][6:8])
+
+            # checks whether the image falls within desired date range
             if imageYear >= int(startYear) and imageYear <= int(endYear):
-                imageCount += 1
+                if imageMonth >= int(startMonth) and imageMonth <= int(endMonth):
+                    if imageDay >= int(startDay) and int(imageDay) <= int(endDay):
+                        imageCount += 1
 
     with open(manifest_file, "r") as masterManifest:
         previousLine = ""
@@ -122,40 +132,47 @@ def getImages(startYear = 1836, endYear = datetime.now().year):
             else:
                 pageCount = 1
 
+            # parses off date of publication
             imageYear = int(lineList[9][:4])
+            imageMonth = int(lineList[9][4:6])
+            imageDay = int(lineList[9][6:8])
+
+            # checks whether the image falls within desired date range
             if imageYear >= int(startYear) and imageYear <= int(endYear):
-                fullCount += 1
-                imageURL = line.strip()
+                if imageMonth >= int(startMonth) and imageMonth <= int(endMonth):
+                    if imageDay >= int(startDay) and int(imageDay) <= int(endDay):
+                        fullCount += 1
+                        imageURL = line.strip()
 
-                #constructs file and directory names for sorting purposes
-                batchName = lineList[5][6:]
-                snNumber = lineList[7]
-                date = lineList[9][:4]+"-"+lineList[9][4:6]+"-"+lineList[9][6:8]
-                edition = lineList[9][-1:]
-                issueName = snNumber+"_"+date+"_ed-"+edition
-                imageName = issueName+"_seq-"+str(pageCount)+".jp2"
+                        #constructs file and directory names for sorting purposes
+                        batchName = lineList[5][6:]
+                        snNumber = lineList[7]
+                        date = lineList[9][:4]+"-"+lineList[9][4:6]+"-"+lineList[9][6:8]
+                        edition = lineList[9][-1:]
+                        issueName = snNumber+"_"+date+"_ed-"+edition
+                        imageName = issueName+"_seq-"+str(pageCount)+".jp2"
 
-                if not os.path.exists("data/FullPages/"+batchName):
-                    os.makedirs("data/FullPages/"+batchName)
-                if not os.path.exists("data/FullPages/"+batchName+"/"+issueName):
-                    os.makedirs("data/FullPages/"+batchName+"/"+issueName)
+                        if not os.path.exists("data/FullPages/"+batchName):
+                            os.makedirs("data/FullPages/"+batchName)
+                        if not os.path.exists("data/FullPages/"+batchName+"/"+issueName):
+                            os.makedirs("data/FullPages/"+batchName+"/"+issueName)
 
-                os.chdir("data/FullPages/"+batchName+"/"+issueName)
-                print(imageURL)
+                        os.chdir("data/FullPages/"+batchName+"/"+issueName)
+                        print(imageURL)
 
-                try:
-                    r = requests.get(imageURL, stream=True)
-                    # makes sure the request passed:
-                    if r.status_code == 200:
-                        with open(imageName, 'wb') as f:
-                            f.write(r.content)
+                        try:
+                            r = requests.get(imageURL, stream=True)
+                            # makes sure the request passed:
+                            if r.status_code == 200:
+                                with open(imageName, 'wb') as f:
+                                    f.write(r.content)
 
-                    sys.stdout.write("\rProcessed Image "+str(fullCount)+"/"+str(imageCount)+"           ")
-                    sys.stdout.flush()
-                    os.chdir("../../../../")
+                            sys.stdout.write("\rProcessed Image "+str(fullCount)+"/"+str(imageCount)+"           ")
+                            sys.stdout.flush()
+                            os.chdir("../../../../")
 
-                except:
-                    log.write("Download failed: " + str(imageURL) + "\n")
+                        except:
+                            log.write("Download failed: " + str(imageURL) + "\n")
 
             previousLine = lineList[9]
 
@@ -213,11 +230,13 @@ def convertToJpg():
 
 
 def usage():
-    print("Usage: python Batch_Retrieval.py [1 | 2 | 3] [YYYY] [YYYY]")
+    print("Usage: python Batch_Retrieval.py [1 | 2 | 3] [YYYY] [MM] [DD] [YYYY] [MM] [DD]")
     print("    1 - build manifest and get images")
     print("    2 - get images only")
     print("    3 - build manifest only")
     print("    YYYY - Year beginning and ending (may use same year for both)")
+    print("    MM - Month beginning and ending")
+    print("    DD - Day beginning and ending")
     print("Examples:")
     print("    ./Batch_Retrieval.py 1 1938 1938")
     print("    ./Batch_Retrieval.py 3")
@@ -227,11 +246,11 @@ if len(sys.argv) == 1:
 elif sys.argv[1] == "1":
     print("Preparing to build manifest and get images")
     buildFullManifest()
-    getImages(sys.argv[2], sys.argv[3])
+    getImages(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], sys.argv[7])
     convertToJpg()
 elif sys.argv[1] == "2":
     print("Preparing to get images")
-    getImages(sys.argv[2], sys.argv[3])
+    getImages(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], sys.argv[7])
     convertToJpg()
 elif sys.argv[1] == "3":
     print("Preparing to build manifest")
