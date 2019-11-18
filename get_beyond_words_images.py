@@ -76,6 +76,7 @@ for path in unique_paths[:10]:
             annotation_region = annotation["region"]
             im_width = annotation["width"]
             im_height = annotation["height"]
+            category = annotation["data"]["category"]
 
             # sets coordinates of annotation region
             x1 = int(annotation_region["x"])
@@ -83,8 +84,14 @@ for path in unique_paths[:10]:
             y1 = int(annotation_region["y"])
             y2 = y1 + int(annotation_region["height"])
 
-            # add the annotation to the label image
-            draw.rectangle(((x1, y1), (x2, y2)), fill="red")
+            # add annotation to label image based on category type
+            if category == 'Photograph':
+                draw.rectangle(((x1, y1), (x2, y2)), fill="red")
+            elif category == 'Map':
+                draw.rectangle(((x1, y1), (x2, y2)), fill="green")
+            elif category == 'Comics/Cartoon':
+                draw.rectangle(((x1, y1), (x2, y2)), fill="blue")
+
 
             n_annotations += 1
 

@@ -50,17 +50,19 @@ def buildFullManifest():
     length = len(listOfBatchURLS)
     count = 0
     print("starting processing")
-    openf = open(manifest_file, "a")
     log = open("build_manifest_log.txt", "a")
 
     # iterate through scraped URLs
     for j in listOfBatchURLS:  # can truncate for testing (e.g., [:10])
+
+        openf = open("manifests/" + j[:-1] + ".txt", "a")
+
         count += 1
         sys.stdout.write("\rProcessing "+str(count)+"/"+str(length)+" batch manifests (current: "+j+")")
         sys.stdout.flush()
 
         # add time delay to prevent taking down site
-        time.sleep()
+        time.sleep(2.5)
 
         # header for request
         headers = {'User-Agent':'Mozilla/5.0'}
@@ -87,14 +89,44 @@ def buildFullManifest():
                     fullDataPaths.sort()
 
             openf.writelines(fullDataPaths)
+            openf.close()
 
+        # if the md5 manifest file fails, try the sha1 manifest file instead
         except Exception as e:
-            print("Encountered an error with batch " + j + " : "+ str(e) + "\n")
-            log.write("Batch " + j + " failed: " + str(e) + "\n")
 
-    openf.close()
+            try:
+                # sets path for "manifest-md5.txt"
+                path = batchesURL+j+"manifest-sha1.txt"
+                # load in the full URL (basepath + j)
+                page = requests.get(path)
+                soup = BeautifulSoup(page.text, "html.parser")
+
+                # creates list for storing image paths
+                fullDataPaths = []
+
+                # split lines in .txt
+                lines = str(soup).splitlines()
+
+                # then parse each line (we want to grab each image filepath that is in .jp2 format)
+                for line in lines:
+                    partialDataPath = line.split()
+                    if partialDataPath[1].endswith('.jp2') and partialDataPath[1].count('/') == 4:
+                        fullDataPaths.append(j+partialDataPath[1]+'\n')
+                        fullDataPaths.sort()
+
+                openf.writelines(fullDataPaths)
+                openf.close()
+
+
+            except Exception as e2:
+
+                print("Encountered an error with batch " + j + "\n")
+                log.write("Batch " + j + " failed: \n")
+
     log.close()
 
+
+## HANDLE THE FACT THAT THE MANIFES FILE DOESN'T WORK ANYMORE - REPLACED WITH SMALLER FILES
 
 
 #This function, when given a begin year and an end year, will search through the full Manifest file
