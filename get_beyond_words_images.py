@@ -4,7 +4,6 @@ import urllib
 import requests
 from PIL import Image, ImageFont, ImageDraw, ImageEnhance
 
-
 # first we open the beyond words data (cached in beyond_words_data for reproducability, but can be found here:  http://beyondwords.labs.loc.gov/data)
 with open('beyond_words_data/beyond_words.txt') as f:
     bw = json.load(f)
@@ -13,12 +12,21 @@ with open('beyond_words_data/beyond_words.txt') as f:
 contents = bw["data"]
 
 # quick print of stats
-print("Total # of images: " + str(len(contents)))
+print("Total # of annotations: " + str(len(contents)))
 
 # create log for storing pages that don't download
 log = open("build_manifest_log.txt", "a")
 
 
+# find the number of unique images
+paths = []
+for annotation in contents:
+    paths.append(annotation["location"]["standard"])
+print("Number of unique images: "+ str(len(list(set(paths)))))
+sys.exit()
+
+
+# sets count for observing progress
 ct = 1
 
 # now, we iterate through annotation and grab the image using requests
@@ -64,7 +72,7 @@ for annotation in contents:
     # save the constructed image
     label.save(label_path, "PNG")
 
-    # increment ct
+    # increment count for log
     ct += 1
 
     sys.exit()
