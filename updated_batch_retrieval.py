@@ -6,6 +6,7 @@ import requests
 import urllib
 from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup
+import time
 
 
 
@@ -53,10 +54,13 @@ def buildFullManifest():
     log = open("build_manifest_log.txt", "a")
 
     # iterate through scraped URLs
-    for j in listOfBatchURLS[:1]:
+    for j in listOfBatchURLS:  # can truncate for testing (e.g., [:10])
         count += 1
         sys.stdout.write("\rProcessing "+str(count)+"/"+str(length)+" batch manifests (current: "+j+")")
         sys.stdout.flush()
+
+        # add time delay to prevent taking down site
+        time.sleep()
 
         # header for request
         headers = {'User-Agent':'Mozilla/5.0'}
