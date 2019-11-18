@@ -76,7 +76,19 @@ for path in unique_paths[:10]:
             annotation_region = annotation["region"]
             im_width = annotation["width"]
             im_height = annotation["height"]
-            category = annotation["data"]["category"]
+
+            category = ''
+
+            # pulling off annotation category requires conditional parsing based on structure of dictionary
+            # (some annotations have "values" defined, and the annotation data lives inside as a the 0th element)
+            if 'category' in annotation["data"]:
+                category = annotation["data"]["category"]
+            elif 'values' in annotation["data"]:
+                category = annotation["data"]["values"][0]["category"]
+
+            # if the category wasn't found for whatever reason, we skip
+            if category == '':
+                continue
 
             # sets coordinates of annotation region
             x1 = int(annotation_region["x"])
@@ -92,10 +104,9 @@ for path in unique_paths[:10]:
             elif category == 'Comics/Cartoon':
                 draw.rectangle(((x1, y1), (x2, y2)), fill="blue")
 
-
             n_annotations += 1
 
-            print("Number of annotations for this image: " + str(n_annotations))
+        print("Number of annotations for this image: " + str(n_annotations))
 
     # constructs filepath for downloaded image
     label_path = "beyond_words_data/labels/" + path.replace('/', '_') + ".jpg"
