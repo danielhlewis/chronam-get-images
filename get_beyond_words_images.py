@@ -27,7 +27,7 @@ for annotation in contents:
     # pull off the values we need
     id = annotation["id"]
     location = annotation["location"]["standard"]
-    annoation_region = annotation["region"]
+    annotation_region = annotation["region"]
     im_width = annotation["width"]
     im_height = annotation["height"]
 
@@ -40,10 +40,6 @@ for annotation in contents:
     # constructs filepath for downloaded image
     destination = "beyond_words_data/extracted/" + str(id) + ".jpg"
     label_path = "beyond_words_data/labels/" + str(id) + ".jpg"
-
-    print(region)
-    print(width)
-    print(height)
 
     # here, we try to pull down the image (if the request isn't stale)
     try:
@@ -60,15 +56,15 @@ for annotation in contents:
         log.write("Download failed: " + str(location) + "\n")
 
     # now, we construct the label image
-    label = PIL.Image.new(mode = "RGB", size = (width, height))
-    label  = ImageDraw.Draw(label)
-    label.rectangle(((0, 0), (width, height)), fill="black")
-    label.rectangle((x1, y1), (x2, y2)), fill="red")
+    label = Image.new(mode = "RGB", size = (im_width, im_height))
+    draw  = ImageDraw.Draw(label)
+    draw.rectangle(((0, 0), (im_width, im_height)), fill="black")
+    draw.rectangle(((x1, y1), (x2, y2)), fill="red")
 
-    source_img.save(out_file, "PNG")
+    # save the constructed image
+    label.save(label_path, "PNG")
 
-
-
+    # increment ct
     ct += 1
 
     sys.exit()
