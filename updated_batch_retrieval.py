@@ -79,7 +79,7 @@ def buildFullManifest():
             for line in lines:
                 partialDataPath = line.split()
                 if partialDataPath[1].endswith('.jp2') and partialDataPath[1].count('/') == 4:
-                    fullDataPaths.append(batchesURL+j+partialDataPath[1]+'\n')
+                    fullDataPaths.append(j+partialDataPath[1]+'\n')
                     fullDataPaths.sort()
 
             openf.writelines(fullDataPaths)
@@ -101,10 +101,14 @@ def buildFullManifest():
 def getImages(startYear=1836, startMonth=1, startDay=1, endYear=datetime.now().year, endMonth=datetime.now().month, endDay=datetime.now().day):
     Error404 = []
     imageCount = 0
+
+    batchesURL = "http://chroniclingamerica.loc.gov/data/batches/"
+
     with open(manifest_file, "r") as masterManifest:
 
         # iterate through the files in the manifest
         for line in masterManifest:
+            line = batchesURL + line
             lineList = line.split('/')
 
             # parses off date of publication
@@ -123,6 +127,7 @@ def getImages(startYear=1836, startMonth=1, startDay=1, endYear=datetime.now().y
         pageCount = 1
         fullCount = 0
         for line in masterManifest:
+            line = batchesURL + line
             lineList = line.split('/')
 
             #used in construction of the image's filename.
