@@ -26,7 +26,16 @@ for annotation in contents:
 unique_paths = list(set(paths))
 print("Number of unique images: "+ str(len(unique_paths)))
 
-# sets count for observing progress
+# constructing dictionary for accessing the width and height of each image
+image_dim_dict = {}
+for path in unique_paths:
+    for annotation in contents:
+        if path in image_dim_dict:
+            continue
+        if path == annotation["location"]["standard"]:
+            image_dim_dict[path] = {"width": annotation["width"], "height": annotation["height"]}
+
+# sets count for observing progress in outer loop
 ct = 1
 
 # now, we iterate through each unique path and grab the image using requests
@@ -37,7 +46,7 @@ for path in unique_paths[:10]:
     try:
 
         # destination filepath of image
-        destination = "beyond_words_data/extracted/" + path.replace('/', '_') + ".jpg"
+        destination = "beyond_words_data/extracted/" + path.replace('/', '_')
 
         r = requests.get(path, stream=True)
         # makes sure the request passed:
@@ -45,16 +54,19 @@ for path in unique_paths[:10]:
             with open(destination, 'wb') as f:
                 f.write(r.content)
 
-        sys.stdout.write("\rProcessed Image "+str(ct)+"/"+str(len(contents))+"           ")
+        sys.stdout.write("\rProcessed Image "+str(ct)+"/"+str(len(unique_paths))+"           ")
         sys.stdout.flush()
 
     except:
         log.write("Download failed: " + str(location) + "\n")
 
-    # now, we construct the label image to add the annotations
-    im = Image.open(destination)
-    im_width, im_height = im.size
+    # im = Image.open(destination)
+    # im_width, im_height = im.size
 
+    im_width = image_dim_dict[path]["width"]
+    im_height = image_dim_dict[path]["height"]
+
+    # now, we construct the label image to add the annotations
     label = Image.new(mode = "RGB", size = (im_width, im_height))
     draw  = ImageDraw.Draw(label)
     draw.rectangle(((0, 0), (im_width, im_height)), fill="black")
@@ -62,8 +74,18 @@ for path in unique_paths[:10]:
     # counts the number of annotations per image
     n_annotations = 0
 
+    # list storing booleans of whether the annotation has been processed already
+    processed_list = [False]*len(contents)
+
     # we now find all of the annotations corresponding to this image
-    for annotation in contents:
+    for i in range(0, len(contents)):
+
+        # if this annotation has already been processed for another inmage, we skip it and move on
+        if processed_list[i] == True:
+            continue
+
+        # pulls off the annotation
+        annotation = contents[i]
 
         # pulls off filepath for annotation
         location = annotation["location"]["standard"]
@@ -104,12 +126,16 @@ for path in unique_paths[:10]:
             elif category == 'Comics/Cartoon':
                 draw.rectangle(((x1, y1), (x2, y2)), fill="blue")
 
+            # increment the number of annotations per the specific image
             n_annotations += 1
 
-        print("Number of annotations for this image: " + str(n_annotations))
+            # flag that this annotation has been processed already and doesn't need to be re-processed
+            processed_list[i] = True
+
+    print("Number of annotations for this image: " + str(n_annotations))
 
     # constructs filepath for downloaded image
-    label_path = "beyond_words_data/labels/" + path.replace('/', '_') + ".jpg"
+    label_path = "beyond_words_data/labels/" + path.replace('/', '_')
 
     # save the constructed image
     label.save(label_path, "PNG")
