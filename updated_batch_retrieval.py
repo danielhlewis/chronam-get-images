@@ -4,9 +4,9 @@ import os
 import sys
 import requests
 import urllib
-import shutil
 from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup
+
 
 
 manifest_file = "Master_Manifest.txt"
@@ -143,49 +143,73 @@ def getImages(startYear = 1836, endYear = datetime.now().year):
                 os.chdir("data/FullPages/"+batchName+"/"+issueName)
                 print(imageURL)
 
-                # https://stackoverflow.com/questions/34692009/download-image-from-url-using-python-urllib-but-receiving-http-error-403-forbid
-                r = requests.get(imageURL, stream=True)
-                print(r)
-                print(r.status_code)
-                if r.status_code == 200:
-                    with open(imageName, 'wb') as f:
-                        f.write(r.content)
-                        # r.raw.decode_content = True
-                        # shutil.copyfileobj(r.raw, f)
+                try:
+                    r = requests.get(imageURL, stream=True)
+                    # makes sure the request passed:
+                    if r.status_code == 200:
+                        with open(imageName, 'wb') as f:
+                            f.write(r.content)
 
-                os.chdir("../../../../")
+                    sys.stdout.write("\rProcessed Image "+str(fullCount)+"/"+str(imageCount)+"           ")
+                    sys.stdout.flush()
+                    os.chdir("../../../../")
 
-                #
-                # try:
-                #     #print(os.getcwd())
-                #     # os.chdir("data/FullPages/"+batchName+"/"+issueName)
-                #     # print(imageURL)
-                #     # print(requests.get(imageURL).content)
-                #
-                #     # f = open(imageName,'w')
-                #     # f.write(urllib.urlopen(imageURL).read())
-                #     # f.close()
-                #
-                #     # response = urllib2.urlopen(imageURL)
-                #     # with open(imageName, "w") as imageFile:
-                #     #     imageFile.write(response.read())
-                #
-                #     # #Status update on the number of images downloaded
-                #     # sys.stdout.write("\rProcessed Image "+str(fullCount)+"/"+str(imageCount)+"           ")
-                #     # sys.stdout.flush()
-                #     # os.chdir("../../../../")
-                #
-                # except:
-                #     print("HELP!")
-
-
+                except:
+                    log.write("Download failed: " + str(imageURL) + "\n")
 
             previousLine = lineList[9]
-    if len(Error404) > 0:
-        print("This files returned a 404 error when trying to download the images.")
-        print(Error404)
+
+    print("Files downloaded; check error logs for any failed downloads")
+
+
+#This function searches through the directory structure created in the getImages function
+#and converts all jp2 images to the jpg format. If an image can't be converted, the function adds
+#the filename to a list of broken images, and this list is presented at the end of the process.
+def convertToJpg():
+    problemImages = []
+    os.chdir("data/FullPages")
+    batchLevel = os.listdir(os.getcwd())
+    totalBatches = len(batchLevel)
+    currentBatch = 0
+    for i in batchLevel:
+        currentBatch += 1
+        os.chdir(i)
+        issueLevel = os.listdir(os.getcwd())
+        totalIssues = len(issueLevel)
+        currentIssue = 0
+        for j in issueLevel:
+            currentIssue += 1
+            os.chdir(j)
+            jp2Images = os.listdir(os.getcwd())
+            totalImages = len(jp2Images)
+            currentImage = 0
+            for k in jp2Images:
+                currentImage += 1
+                try:
+                    if k == '.DS_Store':
+                        continue
+                    command = "mogrify -resize 60x60% -quality 60 -format jpg " + k
+                    os.system(command)
+
+                    #Status update on how many images have been processed
+                    sys.stdout.write("\rConverted Batch: "+str(currentBatch)+"/"+str(totalBatches)+" Issue: "+str(currentIssue)+"/"+str(totalIssues)+" Image: "+str(currentImage)+"/"+str(totalImages)+"           ")
+                    sys.stdout.flush()
+                    #remove old jp2 image to conserve space, also only remove if conversion was successful
+                    os.remove(k)
+                except:
+                    problemImages.append(str(k))
+            os.chdir('..')
+        os.chdir('..')
+    os.chdir('../..')
+
+    #end of process message
+    if len(problemImages) > 0:
+        print("These are images that could not be converted to jpg for some reason. Please check for corruption/ proper download.")
+        print(problemImages)
     else:
-        print("All files downloaded with no errors")
+        print("All images converted successfully")
+
+
 
 
 def usage():
@@ -204,11 +228,11 @@ elif sys.argv[1] == "1":
     print("Preparing to build manifest and get images")
     buildFullManifest()
     getImages(sys.argv[2], sys.argv[3])
-    # convertToJpg()
+    convertToJpg()
 elif sys.argv[1] == "2":
     print("Preparing to get images")
     getImages(sys.argv[2], sys.argv[3])
-    # convertToJpg()
+    convertToJpg()
 elif sys.argv[1] == "3":
     print("Preparing to build manifest")
     buildFullManifest()
