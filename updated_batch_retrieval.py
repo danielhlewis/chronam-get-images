@@ -125,7 +125,7 @@ def getImages(startYear = 1836, endYear = datetime.now().year):
             imageYear = int(lineList[9][:4])
             if imageYear >= int(startYear) and imageYear <= int(endYear):
                 fullCount += 1
-                imageURL = line
+                imageURL = line.strip()
 
                 #constructs file and directory names for sorting purposes
                 batchName = lineList[5][6:]
@@ -140,17 +140,18 @@ def getImages(startYear = 1836, endYear = datetime.now().year):
                 if not os.path.exists("data/FullPages/"+batchName+"/"+issueName):
                     os.makedirs("data/FullPages/"+batchName+"/"+issueName)
 
-
-
                 os.chdir("data/FullPages/"+batchName+"/"+issueName)
                 print(imageURL)
 
-
+                # https://stackoverflow.com/questions/34692009/download-image-from-url-using-python-urllib-but-receiving-http-error-403-forbid
                 r = requests.get(imageURL, stream=True)
+                print(r)
+                print(r.status_code)
                 if r.status_code == 200:
-                    with open(imageName, 'w') as f:
-                        r.raw.decode_content = True
-                        shutil.copyfileobj(r.raw, f)
+                    with open(imageName, 'wb') as f:
+                        f.write(r.content)
+                        # r.raw.decode_content = True
+                        # shutil.copyfileobj(r.raw, f)
 
                 os.chdir("../../../../")
 
