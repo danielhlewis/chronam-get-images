@@ -7,10 +7,9 @@ import urllib
 from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup
 import time
+import glob
 
 
-
-manifest_file = "Master_Manifest.txt"
 
 #This function creates a manifest containing the web urls of every jp2 newspaper page images from Chronicling America.
 #It does this by first navigating to the html page that links to each of the batch folders, then scrubs
@@ -18,10 +17,7 @@ manifest_file = "Master_Manifest.txt"
 #to each batch folder and loads up the manifest for that batch, retrieves the urls for the images from the manifest
 #and appends the URLs to the full manifest file.
 def buildFullManifest():
-    # remove existing manifest file in order to prevent appending to it
-    if os.path.exists(manifest_file):
-        print("Deleted " + manifest_file + " and generating new one")
-        os.remove(manifest_file)
+
     print("Getting batch urls")
     batchesURL = "http://chroniclingamerica.loc.gov/data/batches/"
 
@@ -138,86 +134,94 @@ def getImages(startYear=1836, startMonth=1, startDay=1, endYear=datetime.now().y
     Error404 = []
     imageCount = 0
 
+    # url prefix for fetching images
     batchesURL = "http://chroniclingamerica.loc.gov/data/batches/"
 
-    with open(manifest_file, "r") as masterManifest:
+    # grabs all of the filepaths for text files that contain image filepaths to pull
+    manifests = glob.glob('manifests/*.txt')
 
-        # iterate through the files in the manifest
-        for line in masterManifest:
-            line = batchesURL + line
-            lineList = line.split('/')
+    for manifest_file in manifests:
 
-            # parses off date of publication
-            imageYear = int(lineList[9][:4])
-            imageMonth = int(lineList[9][4:6])
-            imageDay = int(lineList[9][6:8])
+        with open(manifest_file, "r") as masterManifest:
 
-            # checks whether the image falls within desired date range
-            if imageYear >= int(startYear) and imageYear <= int(endYear):
-                if imageMonth >= int(startMonth) and imageMonth <= int(endMonth):
-                    if imageDay >= int(startDay) and int(imageDay) <= int(endDay):
-                        imageCount += 1
+            # iterate through the files in the manifest
+            for line in masterManifest:
+                line = batchesURL + line
+                lineList = line.split('/')
 
-    with open(manifest_file, "r") as masterManifest:
-        previousLine = ""
-        pageCount = 1
-        fullCount = 0
-        for line in masterManifest:
-            line = batchesURL + line
-            lineList = line.split('/')
+                # parses off date of publication
+                imageYear = int(lineList[9][:4])
+                imageMonth = int(lineList[9][4:6])
+                imageDay = int(lineList[9][6:8])
 
-            #used in construction of the image's filename.
-            #ensures consistent naming since each issue of a newspaper shares the same base name
-            if lineList[9] == previousLine:
-                pageCount += 1
-            else:
-                pageCount = 1
+                # checks whether the image falls within desired date range
+                if imageYear >= int(startYear) and imageYear <= int(endYear):
+                    if imageMonth >= int(startMonth) and imageMonth <= int(endMonth):
+                        if imageDay >= int(startDay) and int(imageDay) <= int(endDay):
+                            imageCount += 1
+            continue
 
-            # parses off date of publication
-            imageYear = int(lineList[9][:4])
-            imageMonth = int(lineList[9][4:6])
-            imageDay = int(lineList[9][6:8])
+        with open(manifest_file, "r") as masterManifest:
+            previousLine = ""
+            pageCount = 1
+            fullCount = 0
+            for line in masterManifest:
+                line = batchesURL + line
+                lineList = line.split('/')
 
-            # checks whether the image falls within desired date range
-            if imageYear >= int(startYear) and imageYear <= int(endYear):
-                if imageMonth >= int(startMonth) and imageMonth <= int(endMonth):
-                    if imageDay >= int(startDay) and int(imageDay) <= int(endDay):
-                        fullCount += 1
-                        imageURL = line.strip()
+                #used in construction of the image's filename.
+                #ensures consistent naming since each issue of a newspaper shares the same base name
+                if lineList[9] == previousLine:
+                    pageCount += 1
+                else:
+                    pageCount = 1
 
-                        #constructs file and directory names for sorting purposes
-                        batchName = lineList[5][6:]
-                        snNumber = lineList[7]
-                        date = lineList[9][:4]+"-"+lineList[9][4:6]+"-"+lineList[9][6:8]
-                        edition = lineList[9][-1:]
-                        issueName = snNumber+"_"+date+"_ed-"+edition
-                        imageName = issueName+"_seq-"+str(pageCount)+".jp2"
+                # parses off date of publication
+                imageYear = int(lineList[9][:4])
+                imageMonth = int(lineList[9][4:6])
+                imageDay = int(lineList[9][6:8])
 
-                        if not os.path.exists("data/FullPages/"+batchName):
-                            os.makedirs("data/FullPages/"+batchName)
-                        if not os.path.exists("data/FullPages/"+batchName+"/"+issueName):
-                            os.makedirs("data/FullPages/"+batchName+"/"+issueName)
+                # checks whether the image falls within desired date range
+                if imageYear >= int(startYear) and imageYear <= int(endYear):
+                    if imageMonth >= int(startMonth) and imageMonth <= int(endMonth):
+                        if imageDay >= int(startDay) and int(imageDay) <= int(endDay):
+                            fullCount += 1
+                            imageURL = line.strip()
 
-                        os.chdir("data/FullPages/"+batchName+"/"+issueName)
-                        print(imageURL)
+                            #constructs file and directory names for sorting purposes
+                            batchName = lineList[5][6:]
+                            snNumber = lineList[7]
+                            date = lineList[9][:4]+"-"+lineList[9][4:6]+"-"+lineList[9][6:8]
+                            edition = lineList[9][-1:]
+                            issueName = snNumber+"_"+date+"_ed-"+edition
+                            imageName = issueName+"_seq-"+str(pageCount)+".jp2"
 
-                        try:
-                            r = requests.get(imageURL, stream=True)
-                            # makes sure the request passed:
-                            if r.status_code == 200:
-                                with open(imageName, 'wb') as f:
-                                    f.write(r.content)
+                            if not os.path.exists("data/FullPages/"+batchName):
+                                os.makedirs("data/FullPages/"+batchName)
+                            if not os.path.exists("data/FullPages/"+batchName+"/"+issueName):
+                                os.makedirs("data/FullPages/"+batchName+"/"+issueName)
 
-                            sys.stdout.write("\rProcessed Image "+str(fullCount)+"/"+str(imageCount)+"           ")
-                            sys.stdout.flush()
-                            os.chdir("../../../../")
+                            os.chdir("data/FullPages/"+batchName+"/"+issueName)
+                            print(imageURL)
 
-                        except:
-                            log.write("Download failed: " + str(imageURL) + "\n")
+                            try:
+                                r = requests.get(imageURL, stream=True)
+                                # makes sure the request passed:
+                                if r.status_code == 200:
+                                    with open(imageName, 'wb') as f:
+                                        f.write(r.content)
 
-            previousLine = lineList[9]
+                                sys.stdout.write("\rProcessed Image "+str(fullCount)+"/"+str(imageCount)+"           ")
+                                sys.stdout.flush()
+                                os.chdir("../../../../")
+
+                            except:
+                                log.write("Download failed: " + str(imageURL) + "\n")
+
+                previousLine = lineList[9]
 
     print("Files downloaded; check error logs for any failed downloads")
+    print("Total # of pages within query range: " + str(imageCount))
 
 
 #This function searches through the directory structure created in the getImages function
@@ -292,7 +296,7 @@ elif sys.argv[1] == "1":
 elif sys.argv[1] == "2":
     print("Preparing to get images")
     getImages(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], sys.argv[7])
-    convertToJpg()
+    # convertToJpg()
 elif sys.argv[1] == "3":
     print("Preparing to build manifest")
     buildFullManifest()
