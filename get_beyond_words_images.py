@@ -2,7 +2,18 @@ import json
 import sys
 import urllib
 import requests
-from PIL import Image, ImageFont, ImageDraw, ImageEnhance
+from PIL import Image, ImageDraw
+import time
+import math
+import os
+
+# resampling scale
+scale = 4
+
+# this function downscales according to scale defined above
+def rescale(dimension):
+    return math.floor(dimension/float(scale))
+
 
 # first we open the beyond words data (cached in beyond_words_data for reproducability, but can be found here:  http://beyondwords.labs.loc.gov/data)
 with open('beyond_words_data/beyond_words.txt') as f:
@@ -16,7 +27,6 @@ print("Total # of annotations: " + str(len(contents)))
 
 # create log for storing pages that don't download
 log = open("build_manifest_log.txt", "a")
-
 
 # find the number of unique images
 paths = []
@@ -40,31 +50,42 @@ ct = 1
 
 # now, we iterate through each unique path and grab the image using requests
 # we also find all corresponding annotations and draw masks
-for path in unique_paths[:10]:
+for path in unique_paths:  #can truncate (e.g., [:10]) for testing here
+
+    # destination filepath of image
+    destination = "beyond_words_data/extracted/" + path.replace('/', '_')
+
+    # if the file already exists in the directory, we skip
+    # this is simply to handle the case in which the code times out, etc.
+    if os.path.exists(destination):
+        print("Already processed...")
+        continue
 
     # here, we try to pull down the image (if the request isn't stale)
     try:
-
-        # destination filepath of image
-        destination = "beyond_words_data/extracted/" + path.replace('/', '_')
-
         r = requests.get(path, stream=True)
         # makes sure the request passed:
         if r.status_code == 200:
             with open(destination, 'wb') as f:
                 f.write(r.content)
 
+            # resize image for ease of use
+            time.sleep(0.1)
+            im = Image.open(destination)
+            im = im.resize( (rescale(im.size[0]),rescale(im.size[1])), Image.ANTIALIAS)
+            im.save(destination)
+
         sys.stdout.write("\rProcessed Image "+str(ct)+"/"+str(len(unique_paths))+"           ")
         sys.stdout.flush()
 
     except:
-        log.write("Download failed: " + str(location) + "\n")
+        log.write("Download failed: " + str(path) + "\n")
 
     # im = Image.open(destination)
     # im_width, im_height = im.size
 
-    im_width = image_dim_dict[path]["width"]
-    im_height = image_dim_dict[path]["height"]
+    im_width = rescale(image_dim_dict[path]["width"])
+    im_height = rescale(image_dim_dict[path]["height"])
 
     # now, we construct the label image to add the annotations
     label = Image.new(mode = "RGB", size = (im_width, im_height))
@@ -106,17 +127,21 @@ for path in unique_paths[:10]:
             if 'category' in annotation["data"]:
                 category = annotation["data"]["category"]
             elif 'values' in annotation["data"]:
-                category = annotation["data"]["values"][0]["category"]
+                if 'category' in annotation["data"]["values"][0]:
+                    category = annotation["data"]["values"][0]["category"]
+                else:
+                    log.write("Annotation failed: " + str(annotation) + "\n")
+
 
             # if the category wasn't found for whatever reason, we skip
             if category == '':
                 continue
 
             # sets coordinates of annotation region
-            x1 = int(annotation_region["x"])
-            x2 = x1 + int(annotation_region["width"])
-            y1 = int(annotation_region["y"])
-            y2 = y1 + int(annotation_region["height"])
+            x1 = rescale(annotation_region["x"])
+            x2 = rescale(annotation_region["x"] + annotation_region["width"])
+            y1 = rescale(annotation_region["y"])
+            y2 = rescale(annotation_region["y"] + annotation_region["height"])
 
             # add annotation to label image based on category type
             if category == 'Photograph':
