@@ -58,7 +58,7 @@ def buildFullManifest():
         sys.stdout.flush()
 
         # add time delay to prevent taking down site
-        time.sleep(2.5)
+        time.sleep(1.5)
 
         # header for request
         headers = {'User-Agent':'Mozilla/5.0'}
@@ -113,7 +113,6 @@ def buildFullManifest():
                 openf.writelines(fullDataPaths)
                 openf.close()
 
-
             except Exception as e2:
 
                 print("Encountered an error with batch " + j + "\n")
@@ -159,7 +158,6 @@ def getImages(startYear=1836, startMonth=1, startDay=1, endYear=datetime.now().y
                     if imageMonth >= int(startMonth) and imageMonth <= int(endMonth):
                         if imageDay >= int(startDay) and int(imageDay) <= int(endDay):
                             imageCount += 1
-            continue
 
         with open(manifest_file, "r") as masterManifest:
             previousLine = ""
@@ -296,7 +294,7 @@ elif sys.argv[1] == "1":
 elif sys.argv[1] == "2":
     print("Preparing to get images")
     getImages(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], sys.argv[7])
-    # convertToJpg()
+    convertToJpg()
 elif sys.argv[1] == "3":
     print("Preparing to build manifest")
     buildFullManifest()
