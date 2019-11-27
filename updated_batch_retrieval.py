@@ -8,6 +8,8 @@ from urllib.request import Request, urlopen
 from bs4 import BeautifulSoup
 import time
 import glob
+from PIL import Image
+import math
 
 
 
@@ -159,6 +161,9 @@ def getImages(startYear=1836, startMonth=1, startDay=1, endYear=datetime.now().y
                         if imageDay >= int(startDay) and int(imageDay) <= int(endDay):
                             imageCount += 1
 
+        # comment out just for count
+        # continue
+
         with open(manifest_file, "r") as masterManifest:
             previousLine = ""
             pageCount = 1
@@ -226,6 +231,10 @@ def getImages(startYear=1836, startMonth=1, startDay=1, endYear=datetime.now().y
 #and converts all jp2 images to the jpg format. If an image can't be converted, the function adds
 #the filename to a list of broken images, and this list is presented at the end of the process.
 def convertToJpg():
+
+    # resampling scale
+    resampling_scale = 6
+
     problemImages = []
     os.chdir("data/FullPages")
     batchLevel = os.listdir(os.getcwd())
@@ -233,12 +242,16 @@ def convertToJpg():
     currentBatch = 0
     for i in batchLevel:
         currentBatch += 1
+        if i == '.DS_Store':
+            continue
         os.chdir(i)
         issueLevel = os.listdir(os.getcwd())
         totalIssues = len(issueLevel)
         currentIssue = 0
         for j in issueLevel:
             currentIssue += 1
+            if j == '.DS_Store':
+                continue
             os.chdir(j)
             jp2Images = os.listdir(os.getcwd())
             totalImages = len(jp2Images)
@@ -248,8 +261,18 @@ def convertToJpg():
                 try:
                     if k == '.DS_Store':
                         continue
-                    command = "mogrify -resize 60x60% -quality 60 -format jpg " + k
+                    # convert jp2 to jpg
+                    command = "mogrify -resize 100x100% -quality 100 -format jpg " + k
                     os.system(command)
+
+                    # sleep before re-sizing to make sure mogrify is executed
+                    time.sleep(1.0)
+
+                    # downsample the iamge using PIL
+                    jpg_filepath = k.replace(".jp2", ".jpg")
+                    im = Image.open(jpg_filepath)
+                    im = im.resize( (math.floor(im.size[0]/float(resampling_scale)),math.floor(im.size[1]/float(resampling_scale))), Image.ANTIALIAS)
+                    im.save(jpg_filepath)
 
                     #Status update on how many images have been processed
                     sys.stdout.write("\rConverted Batch: "+str(currentBatch)+"/"+str(totalBatches)+" Issue: "+str(currentIssue)+"/"+str(totalIssues)+" Image: "+str(currentImage)+"/"+str(totalImages)+"           ")
@@ -293,7 +316,7 @@ elif sys.argv[1] == "1":
     convertToJpg()
 elif sys.argv[1] == "2":
     print("Preparing to get images")
-    getImages(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], sys.argv[7])
+    #getImages(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], sys.argv[7])
     convertToJpg()
 elif sys.argv[1] == "3":
     print("Preparing to build manifest")
