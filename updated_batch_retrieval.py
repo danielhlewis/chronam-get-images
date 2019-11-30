@@ -161,7 +161,7 @@ def getImages(startYear=1836, startMonth=1, startDay=1, endYear=datetime.now().y
                         if imageDay >= int(startDay) and int(imageDay) <= int(endDay):
                             imageCount += 1
 
-        # comment out just for count
+        # uncomment just for count
         # continue
 
         with open(manifest_file, "r") as masterManifest:
@@ -325,7 +325,7 @@ elif sys.argv[1] == "1":
     convertToJpg()
 elif sys.argv[1] == "2":
     print("Preparing to get images")
-    #getImages(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], sys.argv[7])
+    getImages(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], sys.argv[7])
     convertToJpg()
 elif sys.argv[1] == "3":
     print("Preparing to build manifest")
