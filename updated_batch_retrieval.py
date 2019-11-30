@@ -208,14 +208,23 @@ def getImages(startYear=1836, startMonth=1, startDay=1, endYear=datetime.now().y
                             print(imageURL)
 
                             try:
+                                # pulls image
                                 r = requests.get(imageURL, stream=True)
                                 # makes sure the request passed:
                                 if r.status_code == 200:
                                     with open(imageName, 'wb') as f:
                                         f.write(r.content)
 
+                                # pulls XML
+                                r = requests.get(imageURL.replace('.jp2', '.xml'))
+                                # makes sure the request passed:
+                                if r.status_code == 200:
+                                    with open(imageName.replace('.jp2', '.xml'), 'wb') as f:
+                                        f.write(r.content)
+
                                 sys.stdout.write("\rProcessed Image "+str(fullCount)+"/"+str(imageCount)+"           ")
                                 sys.stdout.flush()
+
                                 os.chdir("../../../../")
 
                             except:
