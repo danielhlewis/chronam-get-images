@@ -251,7 +251,7 @@ def convertToJpg():
     currentBatch = 0
     for i in batchLevel:
         currentBatch += 1
-        if i == '.DS_Store':
+        if i == '.DS_Store' or '.xml' in i:
             continue
         os.chdir(i)
         issueLevel = os.listdir(os.getcwd())
@@ -268,7 +268,7 @@ def convertToJpg():
             for k in jp2Images:
                 currentImage += 1
                 try:
-                    if k == '.DS_Store':
+                    if k == '.DS_Store' or '.xml' in i:
                         continue
                     # convert jp2 to jpg
                     command = "mogrify -resize 100x100% -quality 100 -format jpg " + k
