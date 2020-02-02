@@ -131,7 +131,7 @@ def buildFullManifest():
 #The images are downloaded to the following directory structure: data/FullPages/BatchLevel/IssueLevel/PageLevel
 #This function also uses wget in order to download images, this is due to complications we ran into
 #using urllib with the Library of Congress's server.
-def getImages(startYear=1836, startMonth=1, startDay=1, endYear=datetime.now().year, endMonth=datetime.now().month, endDay=datetime.now().day):
+def getImages(startYear=1836, startMonth=1, startDay=1, endYear=datetime.now().year, endMonth=datetime.now().month, endDay=datetime.now().day, bool_jp2=True, bool_xml=True, bool_txt=True):
     Error404 = []
     imageCount = 0
 
@@ -208,19 +208,31 @@ def getImages(startYear=1836, startMonth=1, startDay=1, endYear=datetime.now().y
                             print(imageURL)
 
                             try:
-                                # pulls image
-                                r = requests.get(imageURL, stream=True)
-                                # makes sure the request passed:
-                                if r.status_code == 200:
-                                    with open(imageName, 'wb') as f:
-                                        f.write(r.content)
+                                if bool_jp2:
+                                    # pulls image
+                                    r = requests.get(imageURL, stream=True)
+                                    # makes sure the request passed:
+                                    if r.status_code == 200:
+                                        with open(imageName, 'wb') as f:
+                                            f.write(r.content)
 
-                                # pulls XML
-                                r = requests.get(imageURL.replace('.jp2', '.xml'))
-                                # makes sure the request passed:
-                                if r.status_code == 200:
-                                    with open(imageName.replace('.jp2', '.xml'), 'wb') as f:
-                                        f.write(r.content)
+                                if bool_xml:
+                                    # pulls OCR XML
+                                    r = requests.get(imageURL.replace('.jp2', '.xml'))
+                                    # makes sure the request passed:
+                                    if r.status_code == 200:
+                                        with open(imageName.replace('.jp2', '.xml'), 'wb') as f:
+                                            f.write(r.content)
+
+                                if bool_txt:
+                                    # pulls OCR TXT
+                                    ## FOR .TXT file in OCR, we need to use the API url structure, not batch URL structure
+                                    ocrURL = "https://chroniclingamerica.loc.gov/lccn/" + snNumber + "/" + date + "/ed-" + edition + "/seq-" + str(pageCount) + "/ocr.txt"
+                                    r = requests.get(ocrURL)
+                                    # makes sure the request passed:
+                                    if r.status_code == 200:
+                                        with open(imageName.replace('.jp2', '.txt'), 'wb') as f:
+                                            f.write(r.content)
 
                                 sys.stdout.write("\rProcessed Image "+str(fullCount)+"/"+str(imageCount)+"           ")
                                 sys.stdout.flush()
@@ -268,7 +280,7 @@ def convertToJpg():
             for k in jp2Images:
                 currentImage += 1
                 try:
-                    if k == '.DS_Store' or '.xml' in i:
+                    if k == '.DS_Store' or '.xml' in i or '.txt' in i:
                         continue
                     # convert jp2 to jpg
                     command = "mogrify -resize 100x100% -quality 100 -format jpg " + k
@@ -305,27 +317,25 @@ def convertToJpg():
 
 
 def usage():
-    print("Usage: python Batch_Retrieval.py [1 | 2 | 3] [YYYY] [MM] [DD] [YYYY] [MM] [DD]")
+    print("Usage: python Batch_Retrieval.py [1 | 2 | 3] [YYYY] [MM] [DD] [YYYY] [MM] [DD] [True | False] [True | False] [True | False]")
     print("    1 - build manifest and get images")
     print("    2 - get images only")
     print("    3 - build manifest only")
     print("    YYYY - Year beginning and ending (may use same year for both)")
     print("    MM - Month beginning and ending")
     print("    DD - Day beginning and ending")
-    print("Examples:")
-    print("    ./Batch_Retrieval.py 1 1938 1938")
-    print("    ./Batch_Retrieval.py 3")
+    print("    True | False  x 3 for keeping .jp2, .xml, .txt")
 
 if len(sys.argv) == 1:
     usage()
 elif sys.argv[1] == "1":
     print("Preparing to build manifest and get images")
     buildFullManifest()
-    getImages(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], sys.argv[7])
+    getImages(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], sys.argv[7], 'True' == sys.argv[8], 'True' == sys.argv[9], 'True' == sys.argv[10])
     convertToJpg()
 elif sys.argv[1] == "2":
     print("Preparing to get images")
-    getImages(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], sys.argv[7])
+    getImages(sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], sys.argv[7], 'True' == sys.argv[8], 'True' == sys.argv[9], 'True' == sys.argv[10])
     convertToJpg()
 elif sys.argv[1] == "3":
     print("Preparing to build manifest")
