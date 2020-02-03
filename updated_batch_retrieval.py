@@ -135,6 +135,8 @@ def getImages(startYear=1836, startMonth=1, startDay=1, endYear=datetime.now().y
     Error404 = []
     imageCount = 0
 
+    log = open("build_manifest_log.txt", "a")
+
     # url prefix for fetching images
     batchesURL = "http://chroniclingamerica.loc.gov/data/batches/"
 
