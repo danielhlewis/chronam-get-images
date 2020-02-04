@@ -163,7 +163,8 @@ def getImages(startYear=1836, startMonth=1, startDay=1, endYear=datetime.now().y
                         if imageDay >= int(startDay) and int(imageDay) <= int(endDay):
                             imageCount += 1
 
-        # uncomment just for count
+
+        # # uncomment just for count
         # continue
 
         with open(manifest_file, "r") as masterManifest:
@@ -211,30 +212,39 @@ def getImages(startYear=1836, startMonth=1, startDay=1, endYear=datetime.now().y
 
                             try:
                                 if bool_jp2:
-                                    # pulls image
-                                    r = requests.get(imageURL, stream=True)
-                                    # makes sure the request passed:
-                                    if r.status_code == 200:
-                                        with open(imageName, 'wb') as f:
-                                            f.write(r.content)
+
+                                    if not os.path.isfile(imageName):
+
+                                        # pulls image
+                                        r = requests.get(imageURL, stream=True)
+                                        # makes sure the request passed:
+                                        if r.status_code == 200:
+                                            with open(imageName, 'wb') as f:
+                                                f.write(r.content)
 
                                 if bool_xml:
-                                    # pulls OCR XML
-                                    r = requests.get(imageURL.replace('.jp2', '.xml'))
-                                    # makes sure the request passed:
-                                    if r.status_code == 200:
-                                        with open(imageName.replace('.jp2', '.xml'), 'wb') as f:
-                                            f.write(r.content)
+
+                                    if not os.path.isfile(imageName.replace('.jp2', '.txt')):
+
+                                        # pulls OCR XML
+                                        r = requests.get(imageURL.replace('.jp2', '.xml'))
+                                        # makes sure the request passed:
+                                        if r.status_code == 200:
+                                            with open(imageName.replace('.jp2', '.xml'), 'wb') as f:
+                                                f.write(r.content)
 
                                 if bool_txt:
-                                    # pulls OCR TXT
-                                    ## FOR .TXT file in OCR, we need to use the API url structure, not batch URL structure
-                                    ocrURL = "https://chroniclingamerica.loc.gov/lccn/" + snNumber + "/" + date + "/ed-" + edition + "/seq-" + str(pageCount) + "/ocr.txt"
-                                    r = requests.get(ocrURL)
-                                    # makes sure the request passed:
-                                    if r.status_code == 200:
-                                        with open(imageName.replace('.jp2', '.txt'), 'wb') as f:
-                                            f.write(r.content)
+
+                                    if not os.path.isfile(imageName.replace('.jp2', '.txt')):
+
+                                        # pulls OCR TXT
+                                        ## FOR .TXT file in OCR, we need to use the API url structure, not batch URL structure
+                                        ocrURL = "https://chroniclingamerica.loc.gov/lccn/" + snNumber + "/" + date + "/ed-" + edition + "/seq-" + str(pageCount) + "/ocr.txt"
+                                        r = requests.get(ocrURL)
+                                        # makes sure the request passed:
+                                        if r.status_code == 200:
+                                            with open(imageName.replace('.jp2', '.txt'), 'wb') as f:
+                                                f.write(r.content)
 
                                 sys.stdout.write("\rProcessed Image "+str(fullCount)+"/"+str(imageCount)+"           ")
                                 sys.stdout.flush()
@@ -265,7 +275,7 @@ def convertToJpg():
     currentBatch = 0
     for i in batchLevel:
         currentBatch += 1
-        if i == '.DS_Store' or '.xml' in i:
+        if i == '.DS_Store' or '.xml' in i or '.txt' in i:
             continue
         os.chdir(i)
         issueLevel = os.listdir(os.getcwd())
@@ -282,7 +292,7 @@ def convertToJpg():
             for k in jp2Images:
                 currentImage += 1
                 try:
-                    if k == '.DS_Store' or '.xml' in i or '.txt' in i:
+                    if k == '.DS_Store' or '.xml' in k or '.txt' in k:
                         continue
                     # convert jp2 to jpg
                     command = "mogrify -resize 100x100% -quality 100 -format jpg " + k
