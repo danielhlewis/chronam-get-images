@@ -65,10 +65,10 @@ def buildFullManifest():
         # header for request
         headers = {'User-Agent':'Mozilla/5.0'}
 
-        # we open each manifest-md5.txt file to extract the filepaths of the .jp2 images (each image is a scan of a page)
+        # we open each manifest-sha1.txt file to extract the filepaths of the .jp2 images (each image is a scan of a page)
         try:
-            # sets path for "manifest-md5.txt"
-            path = batchesURL+j+"manifest-md5.txt"
+            # sets path for "manifest-sha1.txt"
+            path = batchesURL+j+"manifest-sha1.txt"
             # load in the full URL (basepath + j)
             page = requests.get(path)
             soup = BeautifulSoup(page.text, "html.parser")
@@ -86,15 +86,19 @@ def buildFullManifest():
                     fullDataPaths.append(j+partialDataPath[1]+'\n')
                     fullDataPaths.sort()
 
+            print(len(fullDataPaths))
+
+	    ##########
+
             openf.writelines(fullDataPaths)
             openf.close()
 
-        # if the md5 manifest file fails, try the sha1 manifest file instead
+        # if the sha1 manifest file fails, try the md5 manifest file instead
         except Exception as e:
 
             try:
                 # sets path for "manifest-md5.txt"
-                path = batchesURL+j+"manifest-sha1.txt"
+                path = batchesURL+j+"manifest-md5.txt"
                 # load in the full URL (basepath + j)
                 page = requests.get(path)
                 soup = BeautifulSoup(page.text, "html.parser")
@@ -111,6 +115,9 @@ def buildFullManifest():
                     if partialDataPath[1].endswith('.jp2') and partialDataPath[1].count('/') == 4:
                         fullDataPaths.append(j+partialDataPath[1]+'\n')
                         fullDataPaths.sort()
+
+                print("HIT SHA")
+                print(len(fullDataPaths))
 
                 openf.writelines(fullDataPaths)
                 openf.close()
