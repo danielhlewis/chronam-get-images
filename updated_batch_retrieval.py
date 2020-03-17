@@ -86,8 +86,6 @@ def buildFullManifest():
                     fullDataPaths.append(j+partialDataPath[1]+'\n')
                     fullDataPaths.sort()
 
-            print(len(fullDataPaths))
-
 	    ##########
 
             openf.writelines(fullDataPaths)
@@ -115,9 +113,6 @@ def buildFullManifest():
                     if partialDataPath[1].endswith('.jp2') and partialDataPath[1].count('/') == 4:
                         fullDataPaths.append(j+partialDataPath[1]+'\n')
                         fullDataPaths.sort()
-
-                print("HIT SHA")
-                print(len(fullDataPaths))
 
                 openf.writelines(fullDataPaths)
                 openf.close()
