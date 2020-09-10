@@ -199,7 +199,7 @@ def getImages(startYear=1836, startMonth=1, startDay=1, endYear=datetime.now().y
                             imageURL = line.strip()
 
                             #constructs file and directory names for sorting purposes
-                            batchName = lineList[5][6:]
+                            batchName = lineList[5]
                             snNumber = lineList[7]
                             date = lineList[9][:4]+"-"+lineList[9][4:6]+"-"+lineList[9][6:8]
                             edition = lineList[9][-1:]
