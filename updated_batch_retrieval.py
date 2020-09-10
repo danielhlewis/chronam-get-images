@@ -302,14 +302,14 @@ def convertToJpg():
                     command = "mogrify -resize 100x100% -quality 100 -format jpg " + k
                     os.system(command)
 
-                    # sleep before re-sizing to make sure mogrify is executed
-                    time.sleep(1.0)
+                    # # sleep before re-sizing to make sure mogrify is executed
+                    # time.sleep(1.0)
 
-                    # downsample the iamge using PIL
-                    jpg_filepath = k.replace(".jp2", ".jpg")
-                    im = Image.open(jpg_filepath)
-                    im = im.resize( (math.floor(im.size[0]/float(resampling_scale)),math.floor(im.size[1]/float(resampling_scale))), Image.ANTIALIAS)
-                    im.save(jpg_filepath)
+                    # # downsample the iamge using PIL
+                    # jpg_filepath = k.replace(".jp2", ".jpg")
+                    # im = Image.open(jpg_filepath)
+                    # im = im.resize( (math.floor(im.size[0]/float(resampling_scale)),math.floor(im.size[1]/float(resampling_scale))), Image.ANTIALIAS)
+                    # im.save(jpg_filepath)
 
                     #Status update on how many images have been processed
                     sys.stdout.write("\rConverted Batch: "+str(currentBatch)+"/"+str(totalBatches)+" Issue: "+str(currentIssue)+"/"+str(totalIssues)+" Image: "+str(currentImage)+"/"+str(totalImages)+"           ")
