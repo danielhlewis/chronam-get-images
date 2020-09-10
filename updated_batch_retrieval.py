@@ -137,6 +137,8 @@ def getImages(startYear=1836, startMonth=1, startDay=1, endYear=datetime.now().y
     Error404 = []
     imageCount = 0
 
+    workingDirectory = os.getcwd()
+
     log = open("build_manifest_log.txt", "a")
 
     # url prefix for fetching images
@@ -251,7 +253,7 @@ def getImages(startYear=1836, startMonth=1, startDay=1, endYear=datetime.now().y
                                 sys.stdout.write("\rProcessed Image "+str(fullCount)+"/"+str(imageCount)+"           ")
                                 sys.stdout.flush()
 
-                                os.chdir("../../../../")
+                                os.chdir(workingDirectory)
 
                             except:
                                 log.write("Download failed: " + str(imageURL) + "\n")
@@ -318,7 +320,7 @@ def convertToJpg():
                     problemImages.append(str(k))
             os.chdir('..')
         os.chdir('..')
-    os.chdir('../..')
+    os.chdir(workingDirectory)
 
     #end of process message
     if len(problemImages) > 0:
