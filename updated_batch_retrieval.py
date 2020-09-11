@@ -136,6 +136,7 @@ def buildFullManifest():
 def getImages(startYear=1836, startMonth=1, startDay=1, endYear=datetime.now().year, endMonth=datetime.now().month, endDay=datetime.now().day, bool_jp2=True, bool_xml=True, bool_txt=True):
     Error404 = []
     imageCount = 0
+    fullCount = 0
 
     workingDirectory = os.getcwd()
 
@@ -173,8 +174,7 @@ def getImages(startYear=1836, startMonth=1, startDay=1, endYear=datetime.now().y
 
         with open(manifest_file, "r") as masterManifest:
             previousLine = ""
-            pageCount = 1
-            fullCount = 0
+            pageCount = 1            
             for line in masterManifest:
                 line = batchesURL + line
                 lineList = line.split('/')
@@ -268,7 +268,7 @@ def getImages(startYear=1836, startMonth=1, startDay=1, endYear=datetime.now().y
 #and converts all jp2 images to the jpg format. If an image can't be converted, the function adds
 #the filename to a list of broken images, and this list is presented at the end of the process.
 def convertToJpg():
-
+    workingDirectory = os.getcwd()
     # resampling scale
     resampling_scale = 6
 
