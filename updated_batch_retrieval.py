@@ -172,6 +172,7 @@ def getImages(startYear=1836, startMonth=1, startDay=1, endYear=datetime.now().y
         # # uncomment just for count
         # continue
 
+    for manifest_file in manifests:
         with open(manifest_file, "r") as masterManifest:
             previousLine = ""
             pageCount = 1            
